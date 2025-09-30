@@ -1,0 +1,66 @@
+version: "3.9"
+
+# Private network for Jenkins <-> DinD traffic
+networks:
+  jenkins:
+
+# Named volumes (persist across container restarts)
+volumes:
+  # Jenkins home (jobs, users, plugins) — required by assignment (iii)
+  jenkins-data:
+  # TLS certs used by DinD and shared (client) with Jenkins
+  docker-certs-ca:
+  docker-certs-client:
+  # Optional: layer cache so image builds are faster (counts toward "Docker layer cache")
+  dind-cache:
+
+services:
+  # (i) Docker-in-Docker engine that Jenkins will talk to securely over TLS
+  docker:
+    image: docker:dind                              # matches PDF "docker:dind"
+    container_name: dind
+    privileged: true                                # DinD requires this (per PDF)
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs                   # enables TLS & auto-generates certs
+    volumes:
+      - docker-certs-ca:/certs/ca                   # CA certs (server side)
+      - docker-certs-client:/certs/client           # client certs (to be shared read-only with Jenkins)
+      - jenkins-data:/var/jenkins_home              # optional per PDF snippet; safe to keep
+      - dind-cache:/var/lib/docker                  # cache Docker layers
+    networks:
+      - jenkins
+    # Give it the DNS alias "docker" so Jenkins can reach tcp://docker:2376 (per PDF)
+    hostname: docker
+    # Healthcheck so Jenkins waits until the daemon is ready
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # (ii) Jenkins controller that uses the remote DinD engine to build images and run pipelines
+  jenkins:
+    image: jenkins/jenkins:lts-jdk11                # same LTS stream used in the PDF
+    container_name: jenkins
+    user: root                                      # PDF starts Jenkins with -u root so docker CLI works
+    environment:
+      - DOCKER_HOST=tcp://docker:2376               # talk to DinD via network alias "docker"
+      - DOCKER_CERT_PATH=/certs/client              # use the client TLS certs
+      - DOCKER_TLS_VERIFY=1                         # enforce TLS verification
+    volumes:
+      - jenkins-data:/var/jenkins_home              # (iii) persist Jenkins home
+      - docker-certs-client:/certs/client:ro        # mount client certs read-only (per PDF)
+      # Option A (PDF-style): mount host docker binary into Jenkins container
+      # This is optional when using remote DinD, but we keep it to mirror the handout.
+      - /usr/bin/docker:/usr/bin/docker
+    ports:
+      - "8080:8080"                                 # Jenkins UI
+      - "50000:50000"                               # JNLP agents (optional)
+    networks:
+      - jenkins
+    depends_on:
+      docker:
+        condition: service_healthy                  # wait until DinD is up/healthy
+    restart: unless-stopped
+
