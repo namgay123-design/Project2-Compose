@@ -17,19 +17,19 @@ volumes:
 services:
   # (i) Docker-in-Docker engine that Jenkins will talk to securely over TLS
   docker:
-    image: docker:dind                              # matches PDF "docker:dind"
+    image: docker:dind                              # "docker:dind"
     container_name: dind
-    privileged: true                                # DinD requires this (per PDF)
+    privileged: true                                # DinD requires this 
     environment:
       - DOCKER_TLS_CERTDIR=/certs                   # enables TLS & auto-generates certs
     volumes:
       - docker-certs-ca:/certs/ca                   # CA certs (server side)
       - docker-certs-client:/certs/client           # client certs (to be shared read-only with Jenkins)
-      - jenkins-data:/var/jenkins_home              # optional per PDF snippet; safe to keep
+      - jenkins-data:/var/jenkins_home              # optional  safe to keep
       - dind-cache:/var/lib/docker                  # cache Docker layers
     networks:
       - jenkins
-    # Give it the DNS alias "docker" so Jenkins can reach tcp://docker:2376 (per PDF)
+    # Give it the DNS alias "docker" so Jenkins can reach tcp://docker:2376 
     hostname: docker
     # Healthcheck so Jenkins waits until the daemon is ready
     healthcheck:
