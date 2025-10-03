@@ -1,17 +1,17 @@
 version: "3.9"
 
-# Private network for Jenkins <-> DinD traffic
+# Private network for Jenkins and  DinD traffic
 networks:
   jenkins:
 
 # Named volumes (persist across container restarts)
 volumes:
-  # Jenkins home (jobs, users, plugins) — required by assignment (iii)
+  # Jenkins home (jobs, users, plugins)
   jenkins-data:
   # TLS certs used by DinD and shared (client) with Jenkins
   docker-certs-ca:
   docker-certs-client:
-  # Optional: layer cache so image builds are faster (counts toward "Docker layer cache")
+  # Optional:coz layer cache so image builds are faster (counts toward "Docker layer cache")
   dind-cache:
 
 services:
