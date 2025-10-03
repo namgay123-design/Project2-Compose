@@ -41,16 +41,16 @@ services:
 
   # (ii) Jenkins controller that uses the remote DinD engine to build images and run pipelines
   jenkins:
-    image: jenkins/jenkins:lts-jdk11                # same LTS stream used in the PDF
+    image: jenkins/jenkins:lts-jdk11                #  LTS stream
     container_name: jenkins
-    user: root                                      # PDF starts Jenkins with -u root so docker CLI works
+    user: root                                      #  starts Jenkins with -u root so docker CLI works
     environment:
       - DOCKER_HOST=tcp://docker:2376               # talk to DinD via network alias "docker"
       - DOCKER_CERT_PATH=/certs/client              # use the client TLS certs
       - DOCKER_TLS_VERIFY=1                         # enforce TLS verification
     volumes:
-      - jenkins-data:/var/jenkins_home              # (iii) persist Jenkins home
-      - docker-certs-client:/certs/client:ro        # mount client certs read-only (per PDF)
+      - jenkins-data:/var/jenkins_home              #  persist Jenkins home
+      - docker-certs-client:/certs/client:ro        # mount client certs read-only 
       # Option A (PDF-style): mount host docker binary into Jenkins container
       # This is optional when using remote DinD, but we keep it to mirror the handout.
       - /usr/bin/docker:/usr/bin/docker
